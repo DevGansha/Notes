@@ -1,0 +1,110 @@
+@Module
+class AppModule {
+    private Application mApplication;
+ 
+    AppModule(Application mApplication) {
+        this.mApplication = mApplication;
+    }
+ 
+    @Provides
+    @Singleton
+    Application provideApplication() {
+        return mApplication;
+    }
+}
+
+
+
+@Module
+class ApiModule {
+ 
+    String mBaseUrl;
+ 
+    ApiModule(String mBaseUrl) {
+        this.mBaseUrl = mBaseUrl;
+    }
+ 
+ 
+    @Provides
+    @Singleton
+    Cache provideHttpCache(Application application) {
+        int cacheSize = 10 * 1024 * 1024;
+        Cache cache = new Cache(application.getCacheDir(), cacheSize);
+        return cache;
+    }
+ 
+    @Provides
+    @Singleton
+    Gson provideGson() {
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
+        return gsonBuilder.create();
+    }
+ 
+    @Provides
+    @Singleton
+    OkHttpClient provideOkhttpClient(Cache cache) {
+        OkHttpClient.Builder client = new OkHttpClient.Builder();
+        client.cache(cache);
+        return client.build();
+    }
+ 
+    @Provides
+    @Singleton
+    Retrofit provideRetrofit(Gson gson, OkHttpClient okHttpClient) {
+        return new Retrofit.Builder()
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .baseUrl(mBaseUrl)
+                .client(okHttpClient)
+                .build();
+    }
+}
+
+
+
+
+@Singleton
+@Component(modules = {AppModule.class, ApiModule.class})
+public interface ApiComponent {
+    void inject(MainActivity activity);
+}
+
+
+public class MyApplication extends Application {
+ 
+    private ApiComponent mApiComponent;
+ 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+ 
+        mApiComponent = DaggerApiComponent.builder()
+                .appModule(new AppModule(this))
+                .apiModule(new ApiModule("https://simplifiedcoding.net/demos/"))
+                .build();
+    }
+ 
+    public ApiComponent getNetComponent() {
+        return mApiComponent;
+    }
+}
+
+
+public class MainActivity extends AppCompatActivity {
+ 
+    //injecting retrofit
+    @Inject Retrofit retrofit;
+    ListView listView;
+ 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+ 
+        ((MyApplication) getApplication()).getNetComponent().inject(this);
+ 
+ 
+        listView = (ListView) findViewById(R.id.listViewHeroes);
+ 
+        getHeroes();
+    }
