@@ -1,3 +1,4 @@
+=================== Dependency Provider ============================
 @Module
 class AppModule {
     private Application mApplication;
@@ -14,7 +15,7 @@ class AppModule {
 }
 
 
-
+=================== Dependency Provider ============================
 @Module
 class ApiModule {
  
@@ -62,14 +63,14 @@ class ApiModule {
 
 
 
-
+=================== Dependency Component ============================
 @Singleton
 @Component(modules = {AppModule.class, ApiModule.class})
 public interface ApiComponent {
     void inject(MainActivity activity);
 }
 
-
+=================== Object Initialization ============================
 public class MyApplication extends Application {
  
     private ApiComponent mApiComponent;
@@ -89,7 +90,7 @@ public class MyApplication extends Application {
     }
 }
 
-
+=================== Dependency Consumer ============================
 public class MainActivity extends AppCompatActivity {
  
     //injecting retrofit
